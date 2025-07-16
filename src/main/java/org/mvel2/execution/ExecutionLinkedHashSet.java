@@ -2,7 +2,7 @@ package org.mvel2.execution;
 
 import org.mvel2.ExecutionContext;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,11 +18,9 @@ public class ExecutionLinkedHashSet<E> extends LinkedHashSet<E> implements Execu
     }
 
     public ExecutionLinkedHashSet(Set<? extends E> s, ExecutionContext executionContext) {
-        super(s);
+        super(Math.max(2 * s.size(), 11), 0.75F);
         this.executionContext = executionContext;
-        for (E val : this) {
-            this.memorySize += this.executionContext.onValAdd(this, val);
-        }
+        this.addAll(s);
     }
 
     @Override
@@ -52,13 +50,42 @@ public class ExecutionLinkedHashSet<E> extends LinkedHashSet<E> implements Execu
         this.memorySize = 0;
     }
 
+    public void sort() {
+        this.sort(true);
+    }
+
+    public void sort(boolean asc) {
+        ExecutionArrayList<E> list = this.toList();
+        list.sort(asc);
+
+        // Очистити і перезаписати
+        this.clear();
+        this.addAll(list);
+    }
+
+    public ExecutionLinkedHashSet<E> toSorted() {
+        return this.toSorted(true);
+    }
+
+    public ExecutionLinkedHashSet<E> toSorted(boolean asc) {
+        ExecutionArrayList<E> list = this.toList();
+        list.sort(asc);
+        Set<E> newSet = new LinkedHashSet<>(list);
+        return new ExecutionLinkedHashSet<>(newSet, this.executionContext);
+    }
+
+    @SuppressWarnings("unchecked")
+    public ExecutionArrayList<E> toList() {
+        return new ExecutionArrayList<>((List<E>)(List<?>) Arrays.asList(this.toArray()), this.executionContext);
+    }
+
+
     @Override
     public long memorySize() {
         return this.memorySize;
     }
 
-    public List<E> toUnmodifiable() {
-        return ExecutionCollections.unmodifiableExecutionList(new ExecutionArrayList(
-                new ArrayList<>(this), this.executionContext), this.executionContext);
+    public Set<E> toUnmodifiable() {
+        return ExecutionCollections.unmodifiableExecutionSet(this, this.executionContext);
     }
 }

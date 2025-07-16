@@ -21,7 +21,7 @@ import java.util.Map;
 import static org.mvel2.MVEL.compileExpression;
 import static org.mvel2.MVEL.executeTbExpression;
 
-public class TbMapArrayListExpressionsTest extends TestCase {
+public class TbMapArrayListSetExpressionsTest extends TestCase {
 
     private static final Comparator stringCompAsc = new Comparator() {
         public int compare(Object o1, Object o2) {
@@ -2004,6 +2004,7 @@ public class TbMapArrayListExpressionsTest extends TestCase {
         }
     }
 
+    // Set
     public void testExecutionHashMapEntrySet_Unmodifiable() {
         String body = "var msg = {};\n" +
                 "var original = {};\n" +
@@ -2016,7 +2017,7 @@ public class TbMapArrayListExpressionsTest extends TestCase {
         String expected = "{msg={result=[entry1=73, 25]}}";
         assertEquals(expected, result.toString());
 
-        String errorArray = "Error: unmodifiable.add(25): List is unmodifiable";
+        String errorArray = "Error: unmodifiable.add(25): Set is unmodifiable";
         body = "var msg = {};\n" +
                 "var original = {};\n" +
                 "original.put(\"temperature1\", 73);\n" +
@@ -2033,6 +2034,132 @@ public class TbMapArrayListExpressionsTest extends TestCase {
         }
     }
 
+    public void testExecutionHashSetAdd() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb = original.entrySet();\n" +
+                "msg.result1 = setTb.add(\"C\");\n" +
+                "msg.result2 = setTb.add(\"B\");\n" +
+                "msg.result3 = setTb.add(\"A\");\n" +
+                "msg.result4 = setTb.add(\"C\");\n" +
+                "msg.result5 = setTb.add(\"hello\");\n" +
+                "msg.result6 = setTb.add(34567);\n" +
+                "msg.result7 = setTb.add(34567);\n" +
+                "msg.value = setTb;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={result1=true, result2=true, result3=true, result4=false, result5=true, result6=true, result7=false, value=[C, B, A, hello, 34567]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetAddAll() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb = original.entrySet();\n" +
+                "msg.result = setTb.addAll([\"C\", \"B\", \"A\", \"B\", \"C\", \"hello\", 34567]);\n" +
+                "msg.value = setTb;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={result=true, value=[C, B, A, hello, 34567]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetRemove() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb = original.entrySet();\n" +
+                "msg.result1 = setTb.addAll([\"C\", \"B\", \"A\", \"B\", \"C\", \"hello\", 34567]);\n" +
+                "msg.result2 = setTb.remove(\"C\");\n" +
+                "msg.result3 = setTb.remove(\"B\");\n" +
+                "msg.result4 = setTb.remove(\"B\");\n" +
+                "msg.result5 = setTb.remove(34567);\n" +
+                "msg.value = setTb;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={result1=true, result2=true, result3=true, result4=false, result5=true, value=[A, hello]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetClear() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb = original.entrySet();\n" +
+                "msg.result1 = setTb.addAll([\"C\", \"B\", \"A\", \"B\", \"C\", \"hello\", 34567]);\n" +
+                "msg.result2 = setTb.clear();\n" +
+                "msg.value = setTb;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={result1=true, value=[]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetSortAsc() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb = original.entrySet();\n" +
+                "msg.result1 = setTb.addAll([\"C\", \"B\", \"A\", 34567, \"B\", \"C\", \"hello\", 34]);\n" +
+                "setTb.sort();\n" +
+                "msg.value = setTb;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={result1=true, value=[34, 34567, A, B, C, hello]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetSortDesc() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb = original.entrySet();\n" +
+                "setTb.addAll([\"C\", \"B\", \"A\", 34567, \"B\", \"C\", \"hello\", 34]);\n" +
+                "setTb.sort(false);\n" +
+                "msg.value = setTb;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={value=[hello, C, B, A, 34567, 34]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetToSortedAsc() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb1 = original.entrySet();\n" +
+                "setTb1.addAll([\"C\", \"B\", \"A\", 34567, \"B\", \"C\", \"hello\", 34]);\n" +
+                "var setTb2 = setTb1.toSorted();\n" +
+                "msg.value1 = setTb1;\n" +
+                "msg.value2 = setTb2;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={value1=[C, B, A, 34567, hello, 34], value2=[34, 34567, A, B, C, hello]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetToSortedDesc() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb1 = original.entrySet();\n" +
+                "setTb1.addAll([\"C\", \"B\", \"A\", 34567, \"B\", \"C\", \"hello\", 34]);\n" +
+                "var setTb2 = setTb1.toSorted(false);\n" +
+                "msg.value1 = setTb1;\n" +
+                "msg.value2 = setTb2;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={value1=[C, B, A, 34567, hello, 34], value2=[hello, C, B, A, 34567, 34]}}";
+        assertEquals(expected, result.toString());
+    }
+
+    public void testExecutionHashSetToList() {
+        String body = "var msg = {};\n" +
+                "var original = {};\n" +
+                "var setTb = original.entrySet();\n" +
+                "msg.result = setTb.addAll([\"C\", \"B\", \"A\", 34567, \"B\", \"C\", \"hello\", 34]);\n" +
+                "var listTb = setTb.toList();\n" +
+                "msg.value1 = setTb;\n" +
+                "msg.value2 = listTb;\n" +
+                "return {msg: msg};";
+        Object result = executeScript(body);
+        String expected = "{msg={result=true, value1=[C, B, A, 34567, hello, 34], value2=[C, B, A, 34567, hello, 34]}}";
+        assertEquals(expected, result.toString());
+    }
 
     private Object executeScript(String ex) {
         Serializable compiled = compileExpression(ex, new ParserContext());

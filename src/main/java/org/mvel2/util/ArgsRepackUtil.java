@@ -3,14 +3,16 @@ package org.mvel2.util;
 import org.mvel2.ExecutionContext;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
+import org.mvel2.execution.ExecutionLinkedHashSet;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ArgsRepackUtil {
 
@@ -30,6 +32,12 @@ public class ArgsRepackUtil {
             ExecutionHashMap map = new ExecutionHashMap(src.size(), ctx);
             src.forEach((k,v) -> map.put(k, repack(ctx, v)));
             return map;
+        } else if (value instanceof Set){
+            ExecutionLinkedHashSet set = new ExecutionLinkedHashSet<>(ctx);
+            for(Object o : (Set)value){
+                set.add(repack(ctx, o));
+            }
+            return set;
         } else if (value instanceof Collection){
             ExecutionArrayList list = new ExecutionArrayList(ctx);
             for(Object o : (Collection)value){
@@ -57,6 +65,12 @@ public class ArgsRepackUtil {
             Map map = new LinkedHashMap(src.size());
             src.forEach((k,v) -> map.put(k, unpack(v)));
             return map;
+        } else if (value instanceof Set){
+            Set set = new LinkedHashSet();
+            for(Object o : (Set)value){
+                set.add(unpack(o));
+            }
+            return set;
         } else if (value instanceof Collection){
             List list = new ArrayList();
             for(Object o : (Collection)value){
