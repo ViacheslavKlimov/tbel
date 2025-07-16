@@ -18,11 +18,9 @@ public class ExecutionLinkedHashSet<E> extends LinkedHashSet<E> implements Execu
     }
 
     public ExecutionLinkedHashSet(Set<? extends E> s, ExecutionContext executionContext) {
+        super(Math.max(2 * s.size(), 11), 0.75F);
         this.executionContext = executionContext;
-        addAll(s);
-        for (E val : this) {
-            this.memorySize += this.executionContext.onValAdd(this, val);
-        }
+        this.addAll(s);
     }
 
     @Override
