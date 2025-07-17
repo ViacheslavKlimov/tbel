@@ -3918,6 +3918,9 @@ public class CoreConfidenceTests extends AbstractTest {
     String imports = "import org.mvel2.tests.core.CoreConfidenceTests.A;\nimport org.mvel2.tests.core.CoreConfidenceTests.B;\n";
 
     String invoke0 = imports + "new A().invoke(\"s1\", \"s2\")";
+
+    OptimizerFactory.setDefaultOptimizer("reflective");
+
     int result = (Integer) compileAndExecuteWithStrongTyping(invoke0);
     assertEquals(0, result);
     assertEquals(0, runSingleTest(invoke0));
