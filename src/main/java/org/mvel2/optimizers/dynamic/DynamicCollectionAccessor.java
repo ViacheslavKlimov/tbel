@@ -68,7 +68,9 @@ public class DynamicCollectionAccessor implements DynamicAccessor {
             return optimize(pCtx, ctx, elCtx, variableFactory);
           }
           catch (OptimizationNotSupported ex) {
-            deoptimize();
+            // Optimization failed permanently for this accessor; keep opt=true
+            // so we never retry, and fall through to use _safeAccessor
+            _accessor = _safeAccessor;
           }
         }
         else {

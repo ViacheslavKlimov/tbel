@@ -22,6 +22,7 @@ import org.mvel2.ParserContext;
 import org.mvel2.compiler.Accessor;
 import org.mvel2.integration.VariableResolverFactory;
 import org.mvel2.optimizers.AccessorOptimizer;
+import org.mvel2.optimizers.OptimizationNotSupported;
 import org.mvel2.optimizers.OptimizerFactory;
 
 import static java.lang.System.currentTimeMillis;
@@ -57,7 +58,14 @@ public class DynamicSetAccessor implements DynamicAccessor {
       if (++runcount > DynamicOptimizer.tenuringThreshold) {
         if ((currentTimeMillis() - stamp) < DynamicOptimizer.timeSpan) {
           opt = true;
-          return optimize(ctx, elCtx, variableFactory, value);
+          try {
+            return optimize(ctx, elCtx, variableFactory, value);
+          }
+          catch (OptimizationNotSupported ex) {
+            // Optimization failed permanently for this accessor; keep opt=true
+            // so we never retry, and fall through to use _safeAccessor
+            _accessor = _safeAccessor;
+          }
         }
         else {
           runcount = 0;

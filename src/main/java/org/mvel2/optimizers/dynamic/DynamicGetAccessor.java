@@ -65,8 +65,9 @@ public class DynamicGetAccessor implements DynamicAccessor {
             return optimize(ctx, elCtx, variableFactory);
           }
           catch(OptimizationNotSupported ex){
-        	  // If optimization fails, reset to safe reflective accessor to prevent future reattempts
-        	  deoptimize();
+        	  // Optimization failed permanently for this accessor; keep opt=true
+        	  // so we never retry, and fall through to use _safeAccessor
+        	  _accessor = _safeAccessor;
           }
         }
         else {
