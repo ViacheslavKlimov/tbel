@@ -31,13 +31,13 @@ public class DynamicSetAccessor implements DynamicAccessor {
   private int start;
   private int offset;
 
-  private boolean opt = false;
-  private int runcount = 0;
+  private volatile boolean opt = false;
+  private volatile int runcount = 0;
   private long stamp;
 
   private ParserContext context;
   private final Accessor _safeAccessor;
-  private Accessor _accessor;
+  private volatile Accessor _accessor;
   private String description;
 
   public DynamicSetAccessor(ParserContext context, char[] property, int start, int offset, Accessor _accessor) {
