@@ -21,6 +21,7 @@ package org.mvel2.optimizers.dynamic;
 import org.mvel2.ParserContext;
 import org.mvel2.compiler.Accessor;
 import org.mvel2.integration.VariableResolverFactory;
+import org.mvel2.optimizers.OptimizationNotSupported;
 import org.mvel2.optimizers.OptimizerFactory;
 
 import static java.lang.System.currentTimeMillis;
@@ -37,12 +38,12 @@ public class DynamicCollectionAccessor implements DynamicAccessor {
   private long stamp;
   private int type;
 
-  private int runcount;
+  private volatile int runcount;
 
-  private boolean opt = false;
+  private volatile boolean opt = false;
 
   private Accessor _safeAccessor;
-  private Accessor _accessor;
+  private volatile Accessor _accessor;
 
   public DynamicCollectionAccessor(ParserContext pCtx, Object rootObject, Class colType, char[] property, int start, int offset, int type, Accessor _accessor) {
     this.pCtx = pCtx;
@@ -63,8 +64,14 @@ public class DynamicCollectionAccessor implements DynamicAccessor {
       if (++runcount > DynamicOptimizer.tenuringThreshold) {
         if ((currentTimeMillis() - stamp) < DynamicOptimizer.timeSpan) {
           opt = true;
-
-          return optimize(pCtx, ctx, elCtx, variableFactory);
+          try {
+            return optimize(pCtx, ctx, elCtx, variableFactory);
+          }
+          catch (OptimizationNotSupported ex) {
+            // Optimization failed permanently for this accessor; keep opt=true
+            // so we never retry, and fall through to use _safeAccessor
+            _accessor = _safeAccessor;
+          }
         }
         else {
           runcount = 0;

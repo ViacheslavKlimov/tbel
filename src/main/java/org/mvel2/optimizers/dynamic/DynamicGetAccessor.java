@@ -35,14 +35,14 @@ public class DynamicGetAccessor implements DynamicAccessor {
   private long stamp;
   private int type;
 
-  private int runcount;
+  private volatile int runcount;
 
-  private boolean opt = false;
+  private volatile boolean opt = false;
 
   private ParserContext pCtx;
 
   private Accessor _safeAccessor;
-  private Accessor _accessor;
+  private volatile Accessor _accessor;
 
   public DynamicGetAccessor(ParserContext pCtx, char[] expr, int start, int offset, int type, Accessor _accessor) {
     this._safeAccessor = this._accessor = _accessor;
@@ -65,7 +65,9 @@ public class DynamicGetAccessor implements DynamicAccessor {
             return optimize(ctx, elCtx, variableFactory);
           }
           catch(OptimizationNotSupported ex){
-        	  // If optimization fails then, rather than fail evaluation, fallback to use safe reflective accessor
+        	  // Optimization failed permanently for this accessor; keep opt=true
+        	  // so we never retry, and fall through to use _safeAccessor
+        	  _accessor = _safeAccessor;
           }
         }
         else {

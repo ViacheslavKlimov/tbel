@@ -26,6 +26,7 @@ import org.mvel2.integration.VariableResolverFactory;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import static org.mvel2.DataConversion.convert;
 import static org.mvel2.util.ParseTools.getBestCandidate;
 import static org.mvel2.util.ParseTools.getWidenedTarget;
 
@@ -137,6 +138,36 @@ public class MethodAccessor extends InvokableAccessor {
             "actual target: " + ctx.getClass().getName() + "::" + method.getName() + "; coercionNeeded=" + (coercionNeeded ? "yes" : "no") + ")");
       }
     }
+  }
+
+  @Override
+  protected Object[] executeAndCoerce(Class[] target, Object elCtx, VariableResolverFactory vars, boolean isVarargs) {
+    if (executionContextParamIndex < 0) {
+      return super.executeAndCoerce(target, elCtx, vars, isVarargs);
+    }
+    Object[] values = new Object[length];
+    int paramIndex = 0;
+    for (int i = 0; i < length && !(isVarargs && i >= length - 1); i++) {
+      if (i == executionContextParamIndex) {
+        values[i] = elCtx instanceof ExecutionContext ? elCtx : null;
+      } else {
+        values[i] = convert(parms[paramIndex++].getValue(elCtx, vars), target[i]);
+      }
+    }
+    if (isVarargs) {
+      Class<?> componentType = target[length - 1].getComponentType();
+      Object vararg;
+      if (parms == null) {
+        vararg = java.lang.reflect.Array.newInstance(componentType, 0);
+      } else {
+        vararg = java.lang.reflect.Array.newInstance(componentType, parms.length - paramIndex);
+        for (int i = 0; i < parms.length - paramIndex; i++) {
+          java.lang.reflect.Array.set(vararg, i, convert(parms[paramIndex + i].getValue(elCtx, vars), componentType));
+        }
+      }
+      values[length - 1] = vararg;
+    }
+    return values;
   }
 
   private Object[] executeAll(Object ctx, VariableResolverFactory vars, Method m) {
